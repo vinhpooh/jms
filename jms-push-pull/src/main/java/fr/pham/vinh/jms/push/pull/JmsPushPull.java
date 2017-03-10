@@ -31,8 +31,8 @@ public class JmsPushPull {
 
     private static final Boolean NON_TRANSACTED = false;
 
-    private static final String DESTINATION_NAME = "ci_squash";
-    private static final int TIMEOUT = 120 * 1000;
+    private static final String DESTINATION_NAME = "ci_portail_qi";
+    private static final int TIMEOUT = 10 * 1000;
 
     public static void main(String args[]) {
         Connection connection = null;
@@ -47,34 +47,32 @@ public class JmsPushPull {
             Destination destination = (Destination) context.lookup(DESTINATION_NAME);
 
             // Create a Connection
-            LOGGER.debug("create connection");
             connection = connectionFactory.createConnection(USER, PASSWORD);
             connection.start();
 
             // Create a Session
-            LOGGER.debug("create session");
             Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
 
-            // Send message
-            LOGGER.debug("create request");
-            String correlationId = UUID.randomUUID().toString();
+            // Create message
             String request = "";
+            String correlationId = UUID.randomUUID().toString();
             TextMessage message = new TextMessageBuilder()
                     .setJMSCorrelationID(correlationId)
                     .setRequest(request)
                     .build();
-            LOGGER.debug("create producer and send message with correlationId : {}", correlationId);
-            Producer producer = new Producer(session, destination);
-            producer.send(message);
 
-            // Consume
-            LOGGER.debug("create selector");
+            // Send message
+            LOGGER.debug("send message");
+            new Producer(session, destination).send(message);
+
+            // Create selector
             String selector = new SelectorBuilder()
                     .addJMSCorrelationID(correlationId)
                     .build();
-            LOGGER.debug("create consumer and wait a response with selector : {}", selector);
-            Consumer consumer = new Consumer(session, destination, selector);
-            String response = consumer.consume(TIMEOUT);
+
+            // Consume message
+            LOGGER.debug("wait message with selector : {}", selector);
+            String response = new Consumer(session, destination, selector).consume(TIMEOUT);
             System.out.println(response);
 
             // Clean up

@@ -13,7 +13,8 @@ public class Producer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Producer.class);
 
-    private MessageProducer messageProducer;
+    private Session session;
+    private Destination destination;
 
     /**
      * Default constructor.
@@ -22,24 +23,27 @@ public class Producer {
      * @param destination the topic of the producer
      */
     public Producer(Session session, Destination destination) {
-        try {
-            // Create a MessageProducer
-            messageProducer = session.createProducer(destination);
-            // TODO : utile en mode topic ?
-            // messageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-        } catch (JMSException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+        this.session = session;
+        this.destination = destination;
     }
 
     /**
-     * Send a text message.
+     * Send a message.
      *
      * @param message the message to send
      * @throws JMSException JMSException
      */
-    public void send(TextMessage message) throws JMSException {
+    public void send(Message message) throws JMSException {
+        // Create a MessageProducer
+        MessageProducer messageProducer = session.createProducer(destination);
+        // TODO : utile en mode topic ?
+        // messageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+
         // Tell the producer to send the message
         messageProducer.send(message);
+
+        // Close the producer
+        messageProducer.close();
     }
+
 }
