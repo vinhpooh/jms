@@ -1,7 +1,7 @@
 package fr.pham.vinh.jms.push.pull;
 
 import fr.pham.vinh.jms.commons.Consumer;
-import fr.pham.vinh.jms.commons.Producer;
+import fr.pham.vinh.jms.commons.Publisher;
 import fr.pham.vinh.jms.commons.SelectorBuilder;
 import fr.pham.vinh.jms.commons.TextMessageBuilder;
 import org.slf4j.Logger;
@@ -14,6 +14,7 @@ import javax.naming.NamingException;
 import java.util.UUID;
 
 /**
+ * Push a request and pull the response on Java Message Service.
  * Created by Vinh PHAM on 09/03/2017.
  */
 public class JmsPushPull {
@@ -28,7 +29,14 @@ public class JmsPushPull {
     private static final Boolean NON_TRANSACTED = false;
     private static final int TIMEOUT = 120 * 1000;
 
-    public static void main(String args[]) {
+    /**
+     * Send a message and wait the response.
+     *
+     * @param request the request to send
+     * @return the response to the request
+     */
+    public String start(String request) {
+        String response = null;
         Connection connection = null;
 
         try {
@@ -47,32 +55,28 @@ public class JmsPushPull {
             Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
 
             // Create message
-            String request = "";
             String correlationId = UUID.randomUUID().toString();
-            TextMessage message = new TextMessageBuilder()
+            TextMessage message = new TextMessageBuilder(session.createTextMessage())
                     .setJMSCorrelationID(correlationId)
                     .setRequest(request)
                     .build();
 
             // Send message
             LOGGER.debug("send message");
-            new Producer(session, destination).send(message);
+            new Publisher(session).send(destination, message).close();
 
             // Create selector
             String selector = new SelectorBuilder()
-                    .addJMSCorrelationID(correlationId)
+                    .jmsCorrelationID(correlationId)
+                    .or().jmsCorrelationID("test")
                     .build();
 
             // Consume message
             LOGGER.debug("wait message with selector : {}", selector);
-            String response = new Consumer(session, destination).consume(selector, TIMEOUT);
-
-            // TODO : do something with the response
-            LOGGER.debug(response);
+            response = new Consumer(session, destination).consume(selector, TIMEOUT);
 
             // Clean up
             session.close();
-            connection.close();
         } catch (NamingException | JMSException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -87,6 +91,18 @@ public class JmsPushPull {
                 }
             }
         }
+
+        return response;
+    }
+
+    public static void main(String args[]) {
+        // Create the message
+        String request = "";
+
+        // Execute a push pull
+        String response = new JmsPushPull().start(request);
+
+        LOGGER.debug(response);
     }
 
 }
