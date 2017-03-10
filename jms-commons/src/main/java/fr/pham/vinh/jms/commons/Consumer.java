@@ -15,39 +15,27 @@ public class Consumer {
 
     private Session session;
     private Destination destination;
-    private String selector;
 
     /**
      * Default constructor.
      *
      * @param session     the session of the consumer
      * @param destination the topic of the consumer
-     * @param selector    the message filters
-     */
-    public Consumer(Session session, Destination destination, String selector) {
-        this.session = session;
-        this.destination = destination;
-        this.selector = selector;
-    }
-
-    /**
-     * Create a consumer whitouth selector.
-     *
-     * @param session     the session of the consumer
-     * @param destination the topic of the consumer
      */
     public Consumer(Session session, Destination destination) {
-        this(session, destination, null);
+        this.session = session;
+        this.destination = destination;
     }
 
     /**
      * Consume a message that match the selector.
      *
-     * @param timeout the timeout
+     * @param selector the message filters
+     * @param timeout  the timeout
      * @return the payload
      * @throws JMSException JMSException
      */
-    public String consume(int timeout) throws JMSException {
+    public String consume(String selector, int timeout) throws JMSException {
         String response;
 
         // Create a MessageConsumer
@@ -56,8 +44,11 @@ public class Consumer {
         // Wait for a message
         Message message = messageConsumer.receive(timeout);
 
+        // Close the consumer
+        messageConsumer.close();
+
         if (message == null) {
-            LOGGER.error("Timeout while waiting message response [selector : {}/ timeout : {} ms]", messageConsumer.getMessageSelector(), timeout);
+            LOGGER.error("Timeout while waiting message response [selector : {}/ timeout : {} ms]", selector, timeout);
             throw new RuntimeException("Timeout while waiting message response.");
         } else if (message instanceof TextMessage) {
             response = ((TextMessage) message).getText();
@@ -65,9 +56,6 @@ public class Consumer {
             LOGGER.error("Unsupported message type");
             throw new RuntimeException("Unsupported message type");
         }
-
-        // Close the consumer
-        messageConsumer.close();
 
         return response;
     }
