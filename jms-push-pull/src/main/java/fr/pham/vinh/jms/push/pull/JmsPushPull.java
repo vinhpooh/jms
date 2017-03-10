@@ -4,7 +4,6 @@ import fr.pham.vinh.jms.commons.Consumer;
 import fr.pham.vinh.jms.commons.Producer;
 import fr.pham.vinh.jms.commons.SelectorBuilder;
 import fr.pham.vinh.jms.commons.TextMessageBuilder;
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,8 +11,6 @@ import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -24,33 +21,29 @@ public class JmsPushPull {
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPushPull.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final List<String> TRUSTED_PACKAGES = Collections.singletonList("fr.pham.vinh.jms.commons.message");
-
-    private static final String USER = "admin";
-    private static final String PASSWORD = "admin123";
+    private static final String DESTINATION_NAME = "ci_portail_qi";
+    private static final String USER_NAME = "java.naming.security.principal";
+    private static final String PASSWORD_NAME = "java.naming.security.credentials";
 
     private static final Boolean NON_TRANSACTED = false;
-
-    private static final String DESTINATION_NAME = "ci_portail_qi";
-    private static final int TIMEOUT = 10 * 1000;
+    private static final int TIMEOUT = 120 * 1000;
 
     public static void main(String args[]) {
         Connection connection = null;
 
         try {
-            // JNDI lookup of JMS Connection Factory and JMS Destination
+            // JNDI lookup of JMS connection factory and JMS destination
             Context context = new InitialContext();
             ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
-            // TODO : adhérence avec activemq ?
-            ((ActiveMQConnectionFactory) connectionFactory).setTrustedPackages(TRUSTED_PACKAGES);
-
             Destination destination = (Destination) context.lookup(DESTINATION_NAME);
 
-            // Create a Connection
-            connection = connectionFactory.createConnection(USER, PASSWORD);
+            // Create a connection
+            String user = (String) context.getEnvironment().get(USER_NAME);
+            String password = (String) context.getEnvironment().get(PASSWORD_NAME);
+            connection = connectionFactory.createConnection(user, password);
             connection.start();
 
-            // Create a Session
+            // Create a session
             Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
 
             // Create message
@@ -72,8 +65,10 @@ public class JmsPushPull {
 
             // Consume message
             LOGGER.debug("wait message with selector : {}", selector);
-            String response = new Consumer(session, destination, selector).consume(TIMEOUT);
-            System.out.println(response);
+            String response = new Consumer(session, destination).consume(selector, TIMEOUT);
+
+            // TODO : do something with the response
+            LOGGER.debug(response);
 
             // Clean up
             session.close();
