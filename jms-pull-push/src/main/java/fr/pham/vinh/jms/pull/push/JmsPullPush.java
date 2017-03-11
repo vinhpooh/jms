@@ -1,6 +1,7 @@
 package fr.pham.vinh.jms.pull.push;
 
 import fr.pham.vinh.jms.commons.JMSType;
+import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
 import fr.pham.vinh.jms.commons.consumer.Subscriber;
 import fr.pham.vinh.jms.commons.producer.Publisher;
 import org.slf4j.Logger;
@@ -59,6 +60,8 @@ public class JmsPullPush implements MessageListener {
             Subscriber subscriber = new Subscriber(session, destination);
             subscriber.setMessageListener(this);
 
+            // TODO : ajouter une boucle d'attente
+
             // Clean up
             session.close();
         } catch (NamingException | JMSException e) {
@@ -80,30 +83,39 @@ public class JmsPullPush implements MessageListener {
     @Override
     public void onMessage(Message message) {
         try {
-            TextMessage responseMessage = session.createTextMessage();
+            // Sleep 1 seconde before responding
+            // If the client publisher send the request and the response is sent before the client consumer get initialized,
+            // the response is lost (topic mode)
+            Thread.sleep(1000);
+
+            TextMessage responseMessage;
+            LOGGER.debug("Request message  : {} ", message);
 
             if (message instanceof TextMessage) {
                 String request = ((TextMessage) message).getText();
                 String response = processRequest(request);
 
-                responseMessage.setText(response);
+                responseMessage = new TextMessageBuilder(session.createTextMessage())
+                        // Set the correlation ID from the received message to be the correlation id of the response message
+                        // this lets the client identify which message this is a response to if it has more than
+                        // one outstanding message to the server
+                        .setJMSCorrelationID(message.getJMSCorrelationID())
+                        // Set the jms type
+                        .setJMSType(JMSType.RESPONSE.name())
+                        // Set the text
+                        .setText(response)
+                        .build();
+
+                // Send the response to the Destination specified by the JMSReplyTo field of the received message,
+                // this is presumably a temporary queue created by the client
+                publisher.send(message.getJMSReplyTo(), responseMessage);
             } else {
                 LOGGER.error("Unsupported message type");
                 throw new RuntimeException("Unsupported message type");
             }
 
-            // Set the correlation ID from the received message to be the correlation id of the response message
-            // this lets the client identify which message this is a response to if it has more than
-            // one outstanding message to the server
-            responseMessage.setJMSCorrelationID(message.getJMSCorrelationID());
-
-            // Set the jms type
-            responseMessage.setJMSType(JMSType.RESPONSE.name());
-
-            // Send the response to the Destination specified by the JMSReplyTo field of the received message,
-            // this is presumably a temporary queue created by the client
-            this.publisher.send(message.getJMSReplyTo(), responseMessage);
-        } catch (JMSException e) {
+            LOGGER.debug("Response message : {} ", responseMessage);
+        } catch (JMSException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }

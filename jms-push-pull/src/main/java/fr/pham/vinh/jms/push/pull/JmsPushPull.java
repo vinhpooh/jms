@@ -61,11 +61,11 @@ public class JmsPushPull {
                     .setJMSCorrelationID(correlationId)
                     .setJMSReplyTo(destination)
                     .setJMSType(JMSType.REQUEST.name())
-                    .setRequest(request)
+                    .setText(request)
                     .build();
 
             // Send message
-            LOGGER.debug("send message");
+            LOGGER.debug("send message : {}", message);
             new Publisher(session).send(destination, message).close();
 
             // Create selector

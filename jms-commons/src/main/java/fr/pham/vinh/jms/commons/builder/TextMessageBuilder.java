@@ -73,7 +73,7 @@ public class TextMessageBuilder {
      * @return the builder
      * @throws JMSException JMSException
      */
-    public TextMessageBuilder setRequest(String request) throws JMSException {
+    public TextMessageBuilder setText(String request) throws JMSException {
         textMessage.setText(request);
         return this;
     }
