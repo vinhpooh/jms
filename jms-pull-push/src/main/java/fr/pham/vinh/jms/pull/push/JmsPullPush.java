@@ -60,7 +60,7 @@ public class JmsPullPush implements MessageListener {
             subscriber.setMessageListener(this);
 
             // Clean up
-            //session.close();
+            session.close();
         } catch (NamingException | JMSException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
