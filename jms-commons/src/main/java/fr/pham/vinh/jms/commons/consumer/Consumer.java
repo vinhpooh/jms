@@ -1,4 +1,4 @@
-package fr.pham.vinh.jms.commons;
+package fr.pham.vinh.jms.commons.consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

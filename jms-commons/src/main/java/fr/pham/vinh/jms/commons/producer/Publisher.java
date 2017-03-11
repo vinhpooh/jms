@@ -1,4 +1,4 @@
-package fr.pham.vinh.jms.commons;
+package fr.pham.vinh.jms.commons.producer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +21,10 @@ public class Publisher {
     /**
      * Default constructor.
      *
-     * @param session the session to use to create the publishier
+     * @param session the session to use to create the publisher
      * @throws JMSException JMSException
      */
     public Publisher(Session session) throws JMSException {
-        // Create a MessageProducer
         this.messageProducer = session.createProducer(null);
         // TODO : utile en mode topic ?
         // messageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
@@ -40,7 +39,6 @@ public class Publisher {
      * @throws JMSException JMSException
      */
     public Publisher send(Destination destination, Message message) throws JMSException {
-        // Tell the producer to send the message
         messageProducer.send(destination, message);
         return this;
     }
@@ -51,7 +49,6 @@ public class Publisher {
      * @throws JMSException JMSException
      */
     public void close() throws JMSException {
-        // Close the producer
         messageProducer.close();
     }
 }

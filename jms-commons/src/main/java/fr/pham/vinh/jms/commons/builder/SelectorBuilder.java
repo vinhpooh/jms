@@ -1,4 +1,4 @@
-package fr.pham.vinh.jms.commons;
+package fr.pham.vinh.jms.commons.builder;
 
 /**
  * Selector builder.
@@ -40,11 +40,22 @@ public class SelectorBuilder {
     /**
      * Add JMSCorrelationID.
      *
-     * @param jmsCorrelationId the correlation id to add.
+     * @param jmsCorrelationId the correlation id to add
      * @return the builder
      */
     public SelectorBuilder jmsCorrelationID(String jmsCorrelationId) {
         selector.append("JMSCorrelationID='").append(jmsCorrelationId).append("'");
+        return this;
+    }
+
+    /**
+     * Add JMSType.
+     *
+     * @param jmsType the type to add
+     * @return the builder
+     */
+    public SelectorBuilder jmsType(String jmsType) {
+        selector.append("JMSType='").append(jmsType).append("'");
         return this;
     }
 

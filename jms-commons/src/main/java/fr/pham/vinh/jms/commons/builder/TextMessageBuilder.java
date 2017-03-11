@@ -1,5 +1,6 @@
-package fr.pham.vinh.jms.commons;
+package fr.pham.vinh.jms.commons.builder;
 
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.TextMessage;
 
@@ -38,6 +39,30 @@ public class TextMessageBuilder {
      */
     public TextMessageBuilder setJMSCorrelationID(String correlationId) throws JMSException {
         textMessage.setJMSCorrelationID(correlationId);
+        return this;
+    }
+
+    /**
+     * Set the reply to on the text message.
+     *
+     * @param replyTo the reply to to set
+     * @return the builder
+     * @throws JMSException JMSException
+     */
+    public TextMessageBuilder setJMSReplyTo(Destination replyTo) throws JMSException {
+        textMessage.setJMSReplyTo(replyTo);
+        return this;
+    }
+
+    /**
+     * Set the type on the text message.
+     *
+     * @param jmsType the type to set
+     * @return the builder
+     * @throws JMSException JMSException
+     */
+    public TextMessageBuilder setJMSType(String jmsType) throws JMSException {
+        textMessage.setJMSType(jmsType);
         return this;
     }
 

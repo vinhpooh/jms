@@ -1,9 +1,10 @@
 package fr.pham.vinh.jms.push.pull;
 
-import fr.pham.vinh.jms.commons.Consumer;
-import fr.pham.vinh.jms.commons.Publisher;
-import fr.pham.vinh.jms.commons.SelectorBuilder;
-import fr.pham.vinh.jms.commons.TextMessageBuilder;
+import fr.pham.vinh.jms.commons.JMSType;
+import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
+import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
+import fr.pham.vinh.jms.commons.consumer.Consumer;
+import fr.pham.vinh.jms.commons.producer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ public class JmsPushPull {
     private static final String PASSWORD_NAME = "java.naming.security.credentials";
 
     private static final Boolean NON_TRANSACTED = false;
-    private static final int TIMEOUT = 120 * 1000;
+    private static final int TIMEOUT = 10 * 1000;
 
     /**
      * Send a message and wait the response.
@@ -58,6 +59,8 @@ public class JmsPushPull {
             String correlationId = UUID.randomUUID().toString();
             TextMessage message = new TextMessageBuilder(session.createTextMessage())
                     .setJMSCorrelationID(correlationId)
+                    .setJMSReplyTo(destination)
+                    .setJMSType(JMSType.REQUEST.name())
                     .setRequest(request)
                     .build();
 
@@ -68,7 +71,7 @@ public class JmsPushPull {
             // Create selector
             String selector = new SelectorBuilder()
                     .jmsCorrelationID(correlationId)
-                    .or().jmsCorrelationID("test")
+                    .and().jmsType(JMSType.RESPONSE.name())
                     .build();
 
             // Consume message
@@ -93,16 +96,6 @@ public class JmsPushPull {
         }
 
         return response;
-    }
-
-    public static void main(String args[]) {
-        // Create the message
-        String request = "";
-
-        // Execute a push pull
-        String response = new JmsPushPull().start(request);
-
-        LOGGER.debug(response);
     }
 
 }
