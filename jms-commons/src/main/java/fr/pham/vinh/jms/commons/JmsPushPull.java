@@ -17,7 +17,7 @@ import java.util.UUID;
  * Push a request and pull the response on Java Message Service.
  * Created by Vinh PHAM on 09/03/2017.
  */
-public class JmsPushPull {
+public abstract class JmsPushPull {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPushPull.class);
 
@@ -48,14 +48,15 @@ public class JmsPushPull {
             Context context = new InitialContext();
             this.connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
             this.defaultTopic = (Destination) context.lookup(DEFAULT_TOPIC_NAME);
-
-            this.topic = topic;
-            this.timeout = timeout;
-            this.user = user;
-            this.password = password;
         } catch (NamingException e) {
             LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
+
+        this.topic = topic;
+        this.timeout = timeout;
+        this.user = user;
+        this.password = password;
     }
 
     /**
@@ -76,7 +77,6 @@ public class JmsPushPull {
      * @return the response to the request
      */
     public String run(String request) {
-        String response = null;
         Connection connection = null;
 
         try {
@@ -109,12 +109,15 @@ public class JmsPushPull {
 
             // Consume message
             LOGGER.debug("Wait message with selector : {}", selector);
-            response = new Consumer(session, destination).consume(selector, timeout);
+            String response = new Consumer(session, destination).consume(selector, timeout);
 
             // Clean up
             session.close();
+
+            return response;
         } catch (JMSException e) {
             LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         } finally {
             // Cleanup code
             // In general, you should always close producers, consumers, sessions, and connections in reverse order of creation.
@@ -127,8 +130,6 @@ public class JmsPushPull {
                 }
             }
         }
-
-        return response;
     }
 
 }

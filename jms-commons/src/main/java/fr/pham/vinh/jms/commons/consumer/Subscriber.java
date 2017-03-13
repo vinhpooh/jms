@@ -44,4 +44,12 @@ public class Subscriber {
         subscriber.setMessageListener(listener);
     }
 
+    /**
+     * Close the subscriber.
+     *
+     * @throws JMSException JMSException
+     */
+    public void close() throws JMSException {
+        subscriber.close();
+    }
 }

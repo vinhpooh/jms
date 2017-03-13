@@ -10,78 +10,121 @@ import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.io.Closeable;
 
 /**
  * Pull a request and push the response on Java Message Service.
  * Created by Vinh PHAM on 09/03/2017.
  */
-public class JmsPullPush implements MessageListener {
+public abstract class JmsPullPush implements Closeable, MessageListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPullPush.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final String DESTINATION_NAME = "ci_portail_qi";
-    private static final String USER_NAME = "java.naming.security.principal";
-    private static final String PASSWORD_NAME = "java.naming.security.credentials";
-
+    private static final String DEFAULT_TOPIC_NAME = "ci_portail_qi";
     private static final Boolean NON_TRANSACTED = false;
 
+    private ConnectionFactory connectionFactory;
+    private Connection connection;
     private Session session;
+    private Destination defaultTopic;
     private Publisher publisher;
+    private Subscriber subscriber;
+
+    private String topic;
+    private String user;
+    private String password;
+
+
+    /**
+     * Constructor with a specific topic to use.
+     *
+     * @param topic    the topic to use
+     * @param user     the user to use
+     * @param password the password to use
+     */
+    public JmsPullPush(String topic, String user, String password) {
+        try {
+            // JNDI lookup of JMS Connection Factory and JMS Destination
+            Context context = new InitialContext();
+            this.connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
+            this.defaultTopic = (Destination) context.lookup(DEFAULT_TOPIC_NAME);
+        } catch (NamingException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+
+        this.topic = topic;
+        this.user = user;
+        this.password = password;
+        this.init();
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param user     the user to use
+     * @param password the password to use
+     */
+    public JmsPullPush(String user, String password) {
+        this(null, user, password);
+    }
 
     /**
      * Initialize a subscriber and a publisher.
      */
-    public void start() {
-        Connection connection = null;
-
+    private void init() {
         try {
-            // JNDI lookup of JMS Connection Factory and JMS Destination
-            Context context = new InitialContext();
-            ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
-            Destination destination = (Destination) context.lookup(DESTINATION_NAME);
-
             // Create a Connection
-            String user = (String) context.getEnvironment().get(USER_NAME);
-            String password = (String) context.getEnvironment().get(PASSWORD_NAME);
             connection = connectionFactory.createConnection(user, password);
             connection.start();
 
-            // Create a Session
+            // Create a session and destination
             session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
+            Destination destination = topic != null ? session.createTopic(topic) : defaultTopic;
 
             // Create the publisher
-            LOGGER.debug("create the publisher");
+            LOGGER.debug("Create the publisher");
             publisher = new Publisher(session);
 
             // Create the subscriber
-            LOGGER.debug("create the subscriber");
-            Subscriber subscriber = new Subscriber(session, destination);
+            LOGGER.debug("Create the subscriber");
+            subscriber = new Subscriber(session, destination);
             subscriber.setMessageListener(this);
-
-            // TODO : ajouter une boucle d'attente
-
-            // Clean up
-            session.close();
-        } catch (NamingException | JMSException e) {
+        } catch (JMSException e) {
             LOGGER.error(e.getMessage(), e);
-        } finally {
-            // Cleanup code
-            // In general, you should always close producers, consumers, sessions, and connections in reverse order of creation.
-            // For this simple example, a JMS connection.close will clean up all other resources.
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (JMSException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void close() {
+        // Cleanup code
+        // In general, you should always close producers, consumers, sessions, and connections in reverse order of creation.
+        // For this simple example, a JMS connection.close will clean up all other resources.
+        try {
+            if (subscriber != null) {
+                subscriber.close();
             }
+            if (publisher != null) {
+                publisher.close();
+            }
+            if (session != null) {
+                session.close();
+            }
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (JMSException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public void onMessage(Message message) {
         try {
+            // FIXME
             // Sleep 1 seconde before responding
             // If the client publisher send the request and the response is sent before the client consumer get initialized,
             // the response is lost (topic mode)
@@ -116,6 +159,7 @@ public class JmsPullPush implements MessageListener {
             LOGGER.debug("Response message : {} ", responseMessage);
         } catch (JMSException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -125,13 +169,6 @@ public class JmsPullPush implements MessageListener {
      * @param request the request to process
      * @return the response of the request
      */
-    private String processRequest(String request) {
-        // TODO : répondre à la requête
-        return "{" +
-                "type:\"response\"," +
-                "request:\"" + request + "\"," +
-                "status:\"OK\"" +
-                "}";
-    }
+    protected abstract String processRequest(String request);
 
 }
