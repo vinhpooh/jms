@@ -1,4 +1,4 @@
-package fr.pham.vinh.jms;
+package fr.pham.vinh.jenkins.jms;
 
 import fr.pham.vinh.jms.commons.JmsPushPull;
 

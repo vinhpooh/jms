@@ -10,7 +10,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>jms-push-pull</artifactId>
+    <artifactId>jenkins-jms</artifactId>
 
     <dependencies>
         <!-- Commons -->
