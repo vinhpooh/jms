@@ -76,7 +76,7 @@ public abstract class JmsPushPull {
      * @param request the request to send
      * @return the response to the request
      */
-    public String run(String request) {
+    public String process(String request) {
         Connection connection = null;
 
         try {
@@ -111,7 +111,7 @@ public abstract class JmsPushPull {
 
             // Consume message
             LOGGER.debug("Wait message with selector : {}", selector);
-            String response = new Consumer(session, destination).consume(selector, timeout);
+            String response = Consumer.consume(session, destination, selector, timeout);
 
             // Clean up
             session.close();

@@ -13,29 +13,17 @@ public class Consumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Consumer.class);
 
-    private Session session;
-    private Destination destination;
-
     /**
-     * Default constructor.
+     * Consume a message on the session and destination that match the selector.
      *
      * @param session     the session of the consumer
      * @param destination the topic of the consumer
-     */
-    public Consumer(Session session, Destination destination) {
-        this.session = session;
-        this.destination = destination;
-    }
-
-    /**
-     * Consume a message that match the selector.
-     *
-     * @param selector the message filters
-     * @param timeout  the timeout
+     * @param selector    the message filters
+     * @param timeout     the timeout
      * @return the payload
      * @throws JMSException JMSException
      */
-    public String consume(String selector, int timeout) throws JMSException {
+    public static String consume(Session session, Destination destination, String selector, int timeout) throws JMSException {
         String response;
 
         // Create a MessageConsumer

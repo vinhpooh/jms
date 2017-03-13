@@ -29,7 +29,7 @@ public class JenkinsJms extends JmsPushPull {
 
         // Execute a push pull
         JenkinsJms jenkins = new JenkinsJms(10 * 1000, "admin", "admin123");
-        String response = jenkins.run(request);
+        String response = jenkins.process(request);
 
         System.out.println(response);
     }
