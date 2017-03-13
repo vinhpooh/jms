@@ -124,12 +124,6 @@ public abstract class JmsPull implements Closeable, MessageListener {
     @Override
     public void onMessage(Message message) {
         try {
-            // FIXME
-            // Sleep 1 seconde before responding
-            // If the client publisher send the request and the response is sent before the client consumer get initialized,
-            // the response is lost (topic mode)
-            Thread.sleep(1000);
-
             TextMessage responseMessage;
             LOGGER.debug("Request message  : {} ", message);
 
@@ -157,7 +151,7 @@ public abstract class JmsPull implements Closeable, MessageListener {
             }
 
             LOGGER.debug("Response message : {} ", responseMessage);
-        } catch (JMSException | InterruptedException e) {
+        } catch (JMSException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }

@@ -33,7 +33,7 @@ public class PortailJms extends JmsPull {
 
     public static void main(String args[]) {
         try (PortailJms portail = new PortailJms("admin", "admin123")) {
-            Thread.sleep(60000);
+            Thread.sleep(10 * 60 * 1000);
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }

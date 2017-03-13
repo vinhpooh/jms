@@ -13,7 +13,6 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Push a request and pull the response on Java Message Service.
@@ -99,21 +98,41 @@ public abstract class JmsPush {
                     .setText(request)
                     .build();
 
-            // Send message
-            LOGGER.debug("Send message : {}", message);
-            try (Publisher publisher = new Publisher(session)) {
-                publisher.send(destination, message);
-            }
-
             // Create selector
             String selector = new SelectorBuilder()
                     .jmsCorrelationID(correlationId)
                     .and().jmsType(JMSType.RESPONSE.name())
                     .build();
 
-            // Consume message
-            LOGGER.debug("Wait message with selector : {}", selector);
-            String response = Consumer.consume(session, destination, selector, timeout);
+            // Wait message
+            CompletableFuture<String> futureConsumer = CompletableFuture
+                    .supplyAsync(() -> {
+                        try {
+                            LOGGER.debug("Wait message with selector : {}", selector);
+                            return Consumer.consume(session, destination, selector, timeout);
+                        } catch (JMSException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            throw new RuntimeException(e);
+                        }
+                    });
+
+            // Send message
+            CompletableFuture<Void> futurePublisher = CompletableFuture
+                    .supplyAsync(() -> {
+                        LOGGER.debug("Send message : {}", message);
+                        try (Publisher publisher = new Publisher(session)) {
+                            publisher.send(destination, message);
+                            return null;
+                        } catch (JMSException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            throw new RuntimeException(e);
+                        }
+                    });
+
+            // Wait the response
+            String response = futureConsumer
+                    .thenCombine(futurePublisher, (t, u) -> t)
+                    .join();
 
             // Clean up
             session.close();
