@@ -1,6 +1,5 @@
-package fr.pham.vinh.jms.push.pull;
+package fr.pham.vinh.jms.commons;
 
-import fr.pham.vinh.jms.commons.JMSType;
 import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
 import fr.pham.vinh.jms.commons.consumer.Consumer;
@@ -23,12 +22,52 @@ public class JmsPushPull {
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPushPull.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final String DESTINATION_NAME = "ci_portail_qi";
-    private static final String USER_NAME = "java.naming.security.principal";
-    private static final String PASSWORD_NAME = "java.naming.security.credentials";
+    private static final String DEFAULT_TOPIC_NAME = "ci_portail_qi";
+
+    private ConnectionFactory connectionFactory;
+    private Destination defaultTopic;
+
+    private String topic;
+    private int timeout;
+    private String user;
+    private String password;
 
     private static final Boolean NON_TRANSACTED = false;
-    private static final int TIMEOUT = 10 * 1000;
+
+    /**
+     * Constructor with specific topie to use.
+     *
+     * @param topic    the topic to use
+     * @param timeout  the timeout in ms to use
+     * @param user     the user to use
+     * @param password the password to use
+     */
+    public JmsPushPull(String topic, int timeout, String user, String password) {
+        try {
+            // JNDI lookup of JMS connection factory and JMS destination
+            Context context = new InitialContext();
+            this.connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
+            this.defaultTopic = (Destination) context.lookup(DEFAULT_TOPIC_NAME);
+
+            this.topic = topic;
+            this.timeout = timeout;
+            this.user = user;
+            this.password = password;
+        } catch (NamingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param timeout  the timeout in ms to use
+     * @param user     the user to use
+     * @param password the password to use
+     */
+    public JmsPushPull(int timeout, String user, String password) {
+        this(null, timeout, user, password);
+    }
 
     /**
      * Send a message and wait the response.
@@ -36,24 +75,18 @@ public class JmsPushPull {
      * @param request the request to send
      * @return the response to the request
      */
-    public String start(String request) {
+    public String run(String request) {
         String response = null;
         Connection connection = null;
 
         try {
-            // JNDI lookup of JMS connection factory and JMS destination
-            Context context = new InitialContext();
-            ConnectionFactory connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
-            Destination destination = (Destination) context.lookup(DESTINATION_NAME);
-
             // Create a connection
-            String user = (String) context.getEnvironment().get(USER_NAME);
-            String password = (String) context.getEnvironment().get(PASSWORD_NAME);
             connection = connectionFactory.createConnection(user, password);
             connection.start();
 
-            // Create a session
+            // Create a session and destination
             Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
+            Destination destination = topic != null ? session.createTopic(topic) : defaultTopic;
 
             // Create message
             String correlationId = UUID.randomUUID().toString();
@@ -65,7 +98,7 @@ public class JmsPushPull {
                     .build();
 
             // Send message
-            LOGGER.debug("send message : {}", message);
+            LOGGER.debug("Send message : {}", message);
             new Publisher(session).send(destination, message).close();
 
             // Create selector
@@ -75,12 +108,12 @@ public class JmsPushPull {
                     .build();
 
             // Consume message
-            LOGGER.debug("wait message with selector : {}", selector);
-            response = new Consumer(session, destination).consume(selector, TIMEOUT);
+            LOGGER.debug("Wait message with selector : {}", selector);
+            response = new Consumer(session, destination).consume(selector, timeout);
 
             // Clean up
             session.close();
-        } catch (NamingException | JMSException e) {
+        } catch (JMSException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
             // Cleanup code

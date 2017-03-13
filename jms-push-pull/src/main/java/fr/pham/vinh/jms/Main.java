@@ -1,6 +1,6 @@
 package fr.pham.vinh.jms;
 
-import fr.pham.vinh.jms.push.pull.JmsPushPull;
+import fr.pham.vinh.jms.commons.JmsPushPull;
 
 /**
  * Created by Vinh PHAM on 11/03/2017.
@@ -17,7 +17,8 @@ public class Main {
                 "}";
 
         // Execute a push pull
-        String response = new JmsPushPull().start(request);
+        JmsPushPull jenkins = new JmsPushPull(10 * 1000, "admin", "admin123");
+        String response = jenkins.run(request);
 
         System.out.println(response);
     }
