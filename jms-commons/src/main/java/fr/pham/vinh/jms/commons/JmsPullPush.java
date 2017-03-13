@@ -1,6 +1,5 @@
-package fr.pham.vinh.jms.pull.push;
+package fr.pham.vinh.jms.commons;
 
-import fr.pham.vinh.jms.commons.JMSType;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
 import fr.pham.vinh.jms.commons.consumer.Subscriber;
 import fr.pham.vinh.jms.commons.producer.Publisher;
@@ -31,7 +30,7 @@ public class JmsPullPush implements MessageListener {
     private Publisher publisher;
 
     /**
-     * Wait messages and send reponses.
+     * Initialize a subscriber and a publisher.
      */
     public void start() {
         Connection connection = null;

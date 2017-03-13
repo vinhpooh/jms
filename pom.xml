@@ -20,8 +20,8 @@
 
     <modules>
         <module>jms-commons</module>
-        <module>jms-pull-push</module>
-        <module>jms-push-pull</module>
+        <module>jenkins-jms</module>
+        <module>portail-jms</module>
     </modules>
 
     <dependencyManagement>
