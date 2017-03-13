@@ -99,7 +99,9 @@ public abstract class JmsPushPull {
 
             // Send message
             LOGGER.debug("Send message : {}", message);
-            new Publisher(session).send(destination, message).close();
+            try (Publisher publisher = new Publisher(session)) {
+                publisher.send(destination, message);
+            }
 
             // Create selector
             String selector = new SelectorBuilder()

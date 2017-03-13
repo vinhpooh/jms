@@ -6,12 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
+import java.io.Closeable;
 
 /**
  * Simulate a subscriber.
  * Created by Vinh PHAM on 10/03/2017.
  */
-public class Subscriber {
+public class Subscriber implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Subscriber.class);
 
@@ -46,10 +47,14 @@ public class Subscriber {
 
     /**
      * Close the subscriber.
-     *
-     * @throws JMSException JMSException
      */
-    public void close() throws JMSException {
-        subscriber.close();
+    @Override
+    public void close() {
+        try {
+            subscriber.close();
+        } catch (JMSException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 }
