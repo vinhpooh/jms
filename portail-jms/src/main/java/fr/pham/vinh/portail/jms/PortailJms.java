@@ -1,13 +1,13 @@
 package fr.pham.vinh.portail.jms;
 
-import fr.pham.vinh.jms.commons.JmsPullPush;
+import fr.pham.vinh.jms.commons.JmsPull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Created by Vinh PHAM on 13/03/2017.
  */
-public class PortailJms extends JmsPullPush {
+public class PortailJms extends JmsPull {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PortailJms.class);
 

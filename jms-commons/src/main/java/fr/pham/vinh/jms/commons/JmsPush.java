@@ -12,14 +12,16 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Push a request and pull the response on Java Message Service.
  * Created by Vinh PHAM on 09/03/2017.
  */
-public abstract class JmsPushPull {
+public abstract class JmsPush {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JmsPushPull.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JmsPush.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
     private static final String DEFAULT_TOPIC_NAME = "ci_portail_qi";
@@ -42,7 +44,7 @@ public abstract class JmsPushPull {
      * @param user     the user to use
      * @param password the password to use
      */
-    public JmsPushPull(String topic, int timeout, String user, String password) {
+    public JmsPush(String topic, int timeout, String user, String password) {
         try {
             // JNDI lookup of JMS connection factory and JMS destination
             Context context = new InitialContext();
@@ -66,7 +68,7 @@ public abstract class JmsPushPull {
      * @param user     the user to use
      * @param password the password to use
      */
-    public JmsPushPull(int timeout, String user, String password) {
+    public JmsPush(int timeout, String user, String password) {
         this(null, timeout, user, password);
     }
 

@@ -16,9 +16,9 @@ import java.io.Closeable;
  * Pull a request and push the response on Java Message Service.
  * Created by Vinh PHAM on 09/03/2017.
  */
-public abstract class JmsPullPush implements Closeable, MessageListener {
+public abstract class JmsPull implements Closeable, MessageListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JmsPullPush.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JmsPull.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
     private static final String DEFAULT_TOPIC_NAME = "ci_portail_qi";
@@ -43,7 +43,7 @@ public abstract class JmsPullPush implements Closeable, MessageListener {
      * @param user     the user to use
      * @param password the password to use
      */
-    public JmsPullPush(String topic, String user, String password) {
+    public JmsPull(String topic, String user, String password) {
         try {
             // JNDI lookup of JMS Connection Factory and JMS Destination
             Context context = new InitialContext();
@@ -66,7 +66,7 @@ public abstract class JmsPullPush implements Closeable, MessageListener {
      * @param user     the user to use
      * @param password the password to use
      */
-    public JmsPullPush(String user, String password) {
+    public JmsPull(String user, String password) {
         this(null, user, password);
     }
 

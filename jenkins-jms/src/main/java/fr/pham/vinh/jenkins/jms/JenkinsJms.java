@@ -1,11 +1,11 @@
 package fr.pham.vinh.jenkins.jms;
 
-import fr.pham.vinh.jms.commons.JmsPushPull;
+import fr.pham.vinh.jms.commons.JmsPush;
 
 /**
  * Created by Vinh PHAM on 11/03/2017.
  */
-public class JenkinsJms extends JmsPushPull {
+public class JenkinsJms extends JmsPush {
 
     /**
      * Default constructor.
