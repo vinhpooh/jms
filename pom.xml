@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <jms.commons.version>0.0.1-SNAPSHOT</jms.commons.version>
+        <javax.jms-api>2.0.1</javax.jms-api>
         <activemq.version>5.14.4</activemq.version>
         <slf4j.version>1.7.24</slf4j.version>
         <logback.version>1.2.1</logback.version>
@@ -22,10 +22,18 @@
         <module>jms-commons</module>
         <module>jenkins-jms</module>
         <module>portail-jms</module>
+        <module>sample-jms</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <!-- JMS -->
+            <dependency>
+                <groupId>javax.jms</groupId>
+                <artifactId>javax.jms-api</artifactId>
+                <version>${javax.jms-api}</version>
+            </dependency>
+
             <!-- ActiveMQ -->
             <dependency>
                 <groupId>org.apache.activemq</groupId>

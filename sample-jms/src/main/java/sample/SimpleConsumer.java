@@ -1,4 +1,4 @@
-package fr.pham.vinh.jms.commons.sample;
+package sample;
 
 import fr.pham.vinh.jms.commons.message.RequestObjectMessage;
 import org.apache.activemq.ActiveMQConnectionFactory;

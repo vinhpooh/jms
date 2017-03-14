@@ -13,10 +13,10 @@
     <artifactId>jms-commons</artifactId>
 
     <dependencies>
-        <!-- ActiveMQ -->
+        <!-- JMS -->
         <dependency>
-            <groupId>org.apache.activemq</groupId>
-            <artifactId>activemq-client</artifactId>
+            <groupId>javax.jms</groupId>
+            <artifactId>javax.jms-api</artifactId>
         </dependency>
 
         <!-- Logging -->
