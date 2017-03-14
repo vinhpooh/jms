@@ -23,7 +23,7 @@ public abstract class JmsPush {
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPush.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final String DEFAULT_TOPIC_NAME = "ci_portail_qi";
+    private static final String DEFAULT_TOPIC_NAME = "default.topic";
 
     private ConnectionFactory connectionFactory;
     private Destination defaultTopic;

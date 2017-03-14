@@ -21,7 +21,7 @@ public abstract class JmsPull implements Closeable, MessageListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPull.class);
 
     private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final String DEFAULT_TOPIC_NAME = "ci_portail_qi";
+    private static final String DEFAULT_TOPIC_NAME = "default.topic";
     private static final Boolean NON_TRANSACTED = false;
 
     private ConnectionFactory connectionFactory;
