@@ -2,8 +2,6 @@ package fr.pham.vinh.jms.commons;
 
 import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
-import fr.pham.vinh.jms.commons.consumer.Consumer;
-import fr.pham.vinh.jms.commons.producer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,81 +76,103 @@ public abstract class JmsPush {
      * @return the response to the request
      */
     public String process(String request) {
-        Connection connection = null;
-
-        try {
-            // Create a connection
-            connection = connectionFactory.createConnection(user, password);
+        // Create connection
+        try (Connection connection = connectionFactory.createConnection(user, password)) {
             connection.start();
 
-            // Create a session and destination
-            Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
-            Destination destination = topic != null ? session.createTopic(topic) : defaultTopic;
+            // Create session and destination
+            try (Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE)) {
+                Destination destination = topic != null ? session.createTopic(topic) : defaultTopic;
 
-            // Create message
-            String correlationId = UUID.randomUUID().toString();
-            TextMessage message = new TextMessageBuilder(session.createTextMessage())
-                    .setJMSCorrelationID(correlationId)
-                    .setJMSReplyTo(destination)
-                    .setJMSType(JMSType.REQUEST.name())
-                    .setText(request)
-                    .build();
+                // Create correlationId
+                String correlationId = UUID.randomUUID().toString();
 
-            // Create selector
-            String selector = new SelectorBuilder()
-                    .jmsCorrelationID(correlationId)
-                    .and().jmsType(JMSType.RESPONSE.name())
-                    .build();
+                // Create message
+                TextMessage message = new TextMessageBuilder(session.createTextMessage())
+                        .setJMSCorrelationID(correlationId)
+                        .setJMSReplyTo(destination)
+                        .setJMSType(JMSType.REQUEST.name())
+                        .setText(request)
+                        .build();
 
-            // Wait message
-            CompletableFuture<String> futureConsumer = CompletableFuture
-                    .supplyAsync(() -> {
-                        try {
-                            LOGGER.debug("Wait message with selector : {}", selector);
-                            return Consumer.consume(session, destination, selector, timeout);
-                        } catch (JMSException e) {
-                            LOGGER.error(e.getMessage(), e);
-                            throw new RuntimeException(e);
-                        }
-                    });
+                // Create selector
+                String selector = new SelectorBuilder()
+                        .jmsCorrelationID(correlationId)
+                        .and().jmsType(JMSType.RESPONSE.name())
+                        .build();
 
-            // Send message
-            CompletableFuture<Void> futurePublisher = CompletableFuture
-                    .supplyAsync(() -> {
-                        LOGGER.debug("Send message : {}", message);
-                        try (Publisher publisher = new Publisher(session)) {
-                            publisher.send(destination, message);
-                            return null;
-                        } catch (JMSException e) {
-                            LOGGER.error(e.getMessage(), e);
-                            throw new RuntimeException(e);
-                        }
-                    });
+                // Asynchroneously wait the response
+                CompletableFuture<String> consumed = asyncConsumer(session, destination, selector);
 
-            // Wait the response
-            String response = futureConsumer
-                    .thenCombine(futurePublisher, (t, u) -> t)
-                    .join();
+                // Asynchroneously send the request
+                CompletableFuture<Void> produced = asyncProducer(session, destination, message);
 
-            // Clean up
-            session.close();
-
-            return response;
+                // Wait the request's response
+                return produced.thenCombine(consumed, (t, u) -> u).join();
+            }
         } catch (JMSException e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
-        } finally {
-            // Cleanup code
-            // In general, you should always close producers, consumers, sessions, and connections in reverse order of creation.
-            // For this simple example, a JMS connection.close will clean up all other resources.
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (JMSException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            }
         }
+    }
+
+    /**
+     * Asynchroneously wait a message.
+     *
+     * @param session     the session to create the consumer
+     * @param destination the destination to listen
+     * @param selector    the message filter
+     * @return futur response
+     */
+    private CompletableFuture<String> asyncConsumer(Session session, Destination destination, String selector) {
+        return CompletableFuture
+                .supplyAsync(() -> {
+                    try (MessageConsumer consumer = session.createConsumer(destination, selector)) {
+                        // Wait for a message
+                        LOGGER.debug("Wait message on topic {} with selector : {}", destination, selector);
+                        Message message = consumer.receive(timeout);
+
+                        // Handle message
+                        if (message == null) {
+                            LOGGER.error("Timeout while waiting message response [selector : {}/ timeout : {} ms]", selector, timeout);
+                            throw new RuntimeException("Timeout while waiting message response.");
+                        } else if (message instanceof TextMessage) {
+                            return ((TextMessage) message).getText();
+                        } else {
+                            LOGGER.error("Unsupported message type");
+                            throw new RuntimeException("Unsupported message type");
+                        }
+                    } catch (JMSException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    /**
+     * Asynchroneously send a message.
+     *
+     * @param session     the session to create the producer
+     * @param destination the destination to send
+     * @param message     the message to send
+     * @return Void
+     */
+    private CompletableFuture<Void> asyncProducer(Session session, Destination destination, Message message) {
+        return CompletableFuture
+                .supplyAsync(() -> {
+                    try (MessageProducer producer = session.createProducer(null)) {
+                        // FIXME : setDeliveryDelay not working
+                        Thread.sleep(1000);
+
+                        // Send message
+                        LOGGER.debug("Send message on topic {} : {}", destination, message);
+                        producer.send(destination, message);
+                        return null;
+                    } catch (JMSException | InterruptedException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
 }

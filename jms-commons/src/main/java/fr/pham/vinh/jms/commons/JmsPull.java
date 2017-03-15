@@ -1,8 +1,7 @@
 package fr.pham.vinh.jms.commons;
 
+import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
-import fr.pham.vinh.jms.commons.consumer.Subscriber;
-import fr.pham.vinh.jms.commons.producer.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +27,8 @@ public abstract class JmsPull implements Closeable, MessageListener {
     private Connection connection;
     private Session session;
     private Destination defaultTopic;
-    private Publisher publisher;
-    private Subscriber subscriber;
+    private MessageProducer publisher;
+    private MessageConsumer subscriber;
 
     private String topic;
     private String user;
@@ -85,11 +84,14 @@ public abstract class JmsPull implements Closeable, MessageListener {
 
             // Create the publisher
             LOGGER.debug("Create the publisher");
-            publisher = new Publisher(session);
+            publisher = session.createProducer(null);
 
             // Create the subscriber
-            LOGGER.debug("Create the subscriber");
-            subscriber = new Subscriber(session, destination);
+            LOGGER.debug("Create subscriber on topic : {}", destination);
+            String selector = new SelectorBuilder()
+                    .jmsType(JMSType.REQUEST.name())
+                    .build();
+            subscriber = session.createConsumer(destination, selector);
             subscriber.setMessageListener(this);
         } catch (JMSException e) {
             LOGGER.error(e.getMessage(), e);
@@ -124,7 +126,7 @@ public abstract class JmsPull implements Closeable, MessageListener {
     @Override
     public void onMessage(Message message) {
         try {
-            TextMessage responseMessage;
+            Message responseMessage;
             LOGGER.debug("Request message  : {} ", message);
 
             if (message instanceof TextMessage) {
