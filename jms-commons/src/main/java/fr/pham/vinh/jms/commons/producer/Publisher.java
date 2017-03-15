@@ -27,8 +27,6 @@ public class Publisher implements Closeable {
      */
     public Publisher(Session session) throws JMSException {
         this.publisher = session.createProducer(null);
-        // TODO : utile en mode topic ?
-        // messageProducer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
     }
 
     /**
