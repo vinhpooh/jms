@@ -160,13 +160,13 @@ public abstract class JmsPush {
     private CompletableFuture<Void> asyncProducer(Session session, Destination destination, Message message) {
         return CompletableFuture
                 .supplyAsync(() -> {
-                    try (MessageProducer producer = session.createProducer(null)) {
+                    try (MessageProducer producer = session.createProducer(destination)) {
                         // FIXME : setDeliveryDelay not working
                         Thread.sleep(1000);
 
                         // Send message
                         LOGGER.debug("Send message on topic {} : {}", destination, message);
-                        producer.send(destination, message);
+                        producer.send(message);
                         return null;
                     } catch (JMSException | InterruptedException e) {
                         LOGGER.error(e.getMessage(), e);
