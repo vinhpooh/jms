@@ -2,6 +2,7 @@ package fr.pham.vinh.jms.commons;
 
 import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
+import fr.pham.vinh.jms.commons.enumeration.JMSType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

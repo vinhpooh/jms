@@ -1,8 +1,8 @@
-package fr.pham.vinh.jms.commons;
+package fr.pham.vinh.jms.commons.enumeration;
 
 /**
  * JMSType allowed.
- * Created by hoapham on 11/03/2017.
+ * Created by Vinh PHAM on 11/03/2017.
  */
 public enum JMSType {
     REQUEST("The request type"),
