@@ -1,4 +1,4 @@
-package fr.pham.vinh.portail.jms;
+package fr.pham.vinh.portail;
 
 import com.google.gson.Gson;
 import fr.pham.vinh.jms.commons.JmsPull;
@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
  * Application de test permettant de simuler la commuication avec Squash sur un ESB.
  * Created by Vinh PHAM on 13/03/2017.
  */
-public class SquashJms extends JmsPull {
+public class SquashJmsLauncher extends JmsPull {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SquashJms.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SquashJmsLauncher.class);
 
     private static final String TOPIC_SQUASH = "topic.squash";
     private static final String USER = "admin";
@@ -27,7 +27,7 @@ public class SquashJms extends JmsPull {
      * @param user     the user to use
      * @param password the password to use
      */
-    public SquashJms(String topic, String user, String password) {
+    private SquashJmsLauncher(String topic, String user, String password) {
         super(topic, user, password);
     }
 
@@ -46,7 +46,7 @@ public class SquashJms extends JmsPull {
     }
 
     public static void main(String args[]) {
-        try (SquashJms squash = new SquashJms(TOPIC_SQUASH, USER, PASSWORD)) {
+        try (SquashJmsLauncher squash = new SquashJmsLauncher(TOPIC_SQUASH, USER, PASSWORD)) {
             Thread.sleep(120 * 60 * 1000);
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
