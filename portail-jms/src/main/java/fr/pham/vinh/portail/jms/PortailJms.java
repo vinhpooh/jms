@@ -12,16 +12,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 /**
- * Application permettant la communication du Portail QI sur un ESB.
+ * Classe permettant la communication du Portail QI sur un ESB.
  * Created by Vinh PHAM on 13/03/2017.
  */
 public class PortailJms extends JmsPull {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PortailJms.class);
-
-    private static final String TOPIC_PORTAIL_QI = "topic.portail.qi";
-    private static final String USER = "admin";
-    private static final String PASSWORD = "admin123";
 
     /**
      * Default constructor.
@@ -66,12 +62,5 @@ public class PortailJms extends JmsPull {
         return gson.toJson(portailResponse);
     }
 
-    public static void main(String args[]) {
-        try (PortailJms portail = new PortailJms(TOPIC_PORTAIL_QI, USER, PASSWORD)) {
-            Thread.sleep(120 * 60 * 1000);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
 
 }
