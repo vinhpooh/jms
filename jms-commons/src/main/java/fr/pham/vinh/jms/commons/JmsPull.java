@@ -57,7 +57,6 @@ public abstract class JmsPull implements Closeable, MessageListener {
         this.topic = topic;
         this.user = user;
         this.password = password;
-        this.init();
     }
 
     /**
@@ -73,7 +72,7 @@ public abstract class JmsPull implements Closeable, MessageListener {
     /**
      * Initialize a subscriber and a publisher.
      */
-    private void init() {
+    public void init() {
         try {
             // Create a Connection
             connection = connectionFactory.createConnection(user, password);
