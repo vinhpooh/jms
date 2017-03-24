@@ -50,7 +50,7 @@ public class PortailJmsLauncher {
 
     public static void main(String args[]) throws Exception {
         // Get port from args
-        int port = args.length != 0 && StringUtils.isNotEmpty(args[0]) ? Integer.valueOf(args[0]) : DEFAULT_PORT;
+        int port = args.length != 0 && StringUtils.isNotEmpty(args[0].trim()) ? Integer.valueOf(args[0].trim()) : DEFAULT_PORT;
 
         // ResourceConfig (Jersey) inherit from Application and gives a new configuration without custom properties.
         // The next line takes a vararg of packages as arguments to search for components / resources.
