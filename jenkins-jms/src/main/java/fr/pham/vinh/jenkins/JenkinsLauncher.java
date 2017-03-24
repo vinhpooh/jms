@@ -11,6 +11,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Application permettant la communication de Jenkins, du Portail QI et de Squash sur un ESB.
  * Created by Vinh PHAM on 17/03/2017.
@@ -19,11 +23,35 @@ public class JenkinsLauncher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JenkinsLauncher.class);
 
-    private static final String TOPIC_PORTAIL_QI = "topic.portail.qi";
-    private static final String TOPIC_SQUASH = "topic.squash";
-    private static final int TIMEOUT = 10 * 1000; // timeout in milli
-    private static final String USER = "admin";
-    private static final String PASSWORD = "admin123";
+    private static final String DEFAULT_TOPIC_PORTAIL_QI = "topic.portail.qi";
+    private static final String DEFAULT_TOPIC_SQUASH = "topic.squash";
+    private static final String DEFAULT_TIMEOUT = "10000"; // timeout in milli
+    private static final String DEFAULT_USER = "admin";
+    private static final String DEFAULT_PASSWORD = "admin123";
+
+    private static String topicPortailQI;
+    private static String topicSquash;
+    private static int timeout;
+    private static String user;
+    private static String password;
+
+    static {
+        Properties properties = new Properties();
+        try (InputStream in = JenkinsLauncher.class.getClassLoader().getResourceAsStream("properties.properties")) {
+            properties.load(in);
+            topicPortailQI = properties.getProperty("topic.portail.qi", DEFAULT_TOPIC_PORTAIL_QI);
+            topicSquash = properties.getProperty("topic.squash", DEFAULT_TOPIC_SQUASH);
+            timeout = Integer.valueOf(properties.getProperty("timeout", DEFAULT_TIMEOUT));
+            user = properties.getProperty("user", DEFAULT_USER);
+            password = properties.getProperty("password", DEFAULT_PASSWORD);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        } catch (NumberFormatException e) {
+            LOGGER.warn("Cannot parse port \"{}\", using default port \"{}\".", properties.getProperty("port"), DEFAULT_TIMEOUT);
+            timeout = Integer.valueOf(DEFAULT_TIMEOUT);
+        }
+    }
 
     public static void main(String args[]) {
         // Get VM arguments
@@ -40,7 +68,7 @@ public class JenkinsLauncher {
         Gson gson = new Gson();
 
         // Execute a push pull on PortailQI
-        JenkinsJms jenkins = new JenkinsJms(TOPIC_PORTAIL_QI, TIMEOUT, USER, PASSWORD);
+        JenkinsJms jenkins = new JenkinsJms(topicPortailQI, timeout, user, password);
 
         PortailRequest portailRequest = jenkins.createPortailRequest(product, version, environment);
         String jsonPortailRequest = gson.toJson(portailRequest);
@@ -62,7 +90,7 @@ public class JenkinsLauncher {
 
         // TODO : push pull on SQUASH
         // Execute a push pull on SQUASH
-        jenkins = new JenkinsJms(TOPIC_SQUASH, TIMEOUT, USER, PASSWORD);
+        jenkins = new JenkinsJms(topicSquash, timeout, user, password);
 
         SquashRequest squashRequest = jenkins.createSquashRequest(product, version, environment, portailResponse.getServers());
         String jsonSquashRequest = gson.toJson(squashRequest);

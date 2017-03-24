@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * Healthcheck resource.
+ * HealthCheck resource.
  */
 @Path("/healthcheck")
 public class HealthCheck {
@@ -57,7 +57,7 @@ public class HealthCheck {
 
         if (version == null) {
             // We could not compute the version
-            version = "unknow";
+            version = "unknown";
         }
 
         return version;
