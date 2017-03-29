@@ -9,6 +9,10 @@ import fr.pham.vinh.jms.commons.enumeration.StatusCodeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jms.ConnectionFactory;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import java.util.Arrays;
 
 /**
@@ -19,6 +23,8 @@ public class PortailJms extends JmsPull {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PortailJms.class);
 
+    private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
+
     /**
      * Default constructor.
      *
@@ -28,6 +34,18 @@ public class PortailJms extends JmsPull {
      */
     public PortailJms(String topic, String user, String password) {
         super(topic, user, password);
+    }
+
+    @Override
+    protected ConnectionFactory getConnectionFactory() {
+        try {
+            // JNDI lookup of JMS Connection Factory and JMS Destination
+            Context context = new InitialContext();
+            return (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
+        } catch (NamingException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

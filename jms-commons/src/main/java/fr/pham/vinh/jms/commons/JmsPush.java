@@ -3,13 +3,11 @@ package fr.pham.vinh.jms.commons;
 import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
 import fr.pham.vinh.jms.commons.enumeration.JMSType;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -21,18 +19,14 @@ public abstract class JmsPush {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPush.class);
 
-    private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final String DEFAULT_TOPIC_NAME = "default.topic";
+    private static final String DEFAULT_TOPIC = "default.topic";
+    private static final Boolean NON_TRANSACTED = false;
 
     private ConnectionFactory connectionFactory;
-    private Destination defaultTopic;
-
     private String topic;
     private int timeout;
     private String user;
     private String password;
-
-    private static final Boolean NON_TRANSACTED = false;
 
     /**
      * Constructor with specific parameters to use.
@@ -43,16 +37,7 @@ public abstract class JmsPush {
      * @param password the password to use
      */
     public JmsPush(String topic, int timeout, String user, String password) {
-        try {
-            // JNDI lookup of JMS connection factory and JMS destination
-            Context context = new InitialContext();
-            this.connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
-            this.defaultTopic = (Destination) context.lookup(DEFAULT_TOPIC_NAME);
-        } catch (NamingException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-
+        this.connectionFactory = this.getConnectionFactory();
         this.topic = topic;
         this.timeout = timeout;
         this.user = user;
@@ -83,7 +68,7 @@ public abstract class JmsPush {
 
             // Create session and destination
             try (Session session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE)) {
-                Destination destination = topic != null ? session.createTopic(topic) : defaultTopic;
+                Destination destination = StringUtils.isNoneEmpty(topic) ? session.createTopic(topic) : session.createTopic(DEFAULT_TOPIC);
 
                 // Create correlationId
                 String correlationId = UUID.randomUUID().toString();
@@ -175,5 +160,13 @@ public abstract class JmsPush {
                     }
                 });
     }
+
+
+    /**
+     * Get the connection factory.
+     *
+     * @return the connection factory
+     */
+    protected abstract ConnectionFactory getConnectionFactory();
 
 }

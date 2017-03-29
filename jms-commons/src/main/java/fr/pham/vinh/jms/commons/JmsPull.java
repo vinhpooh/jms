@@ -3,13 +3,11 @@ package fr.pham.vinh.jms.commons;
 import fr.pham.vinh.jms.commons.builder.SelectorBuilder;
 import fr.pham.vinh.jms.commons.builder.TextMessageBuilder;
 import fr.pham.vinh.jms.commons.enumeration.JMSType;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import java.io.Closeable;
 
 /**
@@ -20,21 +18,18 @@ public abstract class JmsPull implements Closeable, MessageListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsPull.class);
 
-    private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
-    private static final String DEFAULT_TOPIC_NAME = "default.topic";
+    private static final String DEFAULT_TOPIC = "default.topic";
     private static final Boolean NON_TRANSACTED = false;
 
     private ConnectionFactory connectionFactory;
     private Connection connection;
     private Session session;
-    private Destination defaultTopic;
     private MessageProducer publisher;
     private MessageConsumer subscriber;
 
     private String topic;
     private String user;
     private String password;
-
 
     /**
      * Constructor with a specific topic to use.
@@ -44,16 +39,7 @@ public abstract class JmsPull implements Closeable, MessageListener {
      * @param password the password to use
      */
     public JmsPull(String topic, String user, String password) {
-        try {
-            // JNDI lookup of JMS Connection Factory and JMS Destination
-            Context context = new InitialContext();
-            this.connectionFactory = (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
-            this.defaultTopic = (Destination) context.lookup(DEFAULT_TOPIC_NAME);
-        } catch (NamingException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-
+        this.connectionFactory = this.getConnectionFactory();
         this.topic = topic;
         this.user = user;
         this.password = password;
@@ -80,7 +66,7 @@ public abstract class JmsPull implements Closeable, MessageListener {
 
             // Create a session and destination
             session = connection.createSession(NON_TRANSACTED, Session.AUTO_ACKNOWLEDGE);
-            Destination destination = topic != null ? session.createTopic(topic) : defaultTopic;
+            Destination destination = StringUtils.isNoneEmpty(topic) ? session.createTopic(topic) : session.createTopic(DEFAULT_TOPIC);
 
             // Create the publisher
             LOGGER.debug("Create the publisher");
@@ -158,6 +144,13 @@ public abstract class JmsPull implements Closeable, MessageListener {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Get the connection factory.
+     *
+     * @return the connection factory
+     */
+    protected abstract ConnectionFactory getConnectionFactory();
 
     /**
      * Process the request.

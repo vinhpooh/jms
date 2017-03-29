@@ -8,6 +8,10 @@ import fr.pham.vinh.jms.commons.enumeration.StatusCodeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jms.ConnectionFactory;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -20,6 +24,7 @@ public class SquashJmsLauncher extends JmsPull {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SquashJmsLauncher.class);
 
+    private static final String CONNECTION_FACTORY_NAME = "connectionFactory";
     private static final String DEFAULT_TOPIC = "topic.squash";
 
     /**
@@ -31,6 +36,18 @@ public class SquashJmsLauncher extends JmsPull {
      */
     private SquashJmsLauncher(String topic, String user, String password) {
         super(topic, user, password);
+    }
+
+    @Override
+    protected ConnectionFactory getConnectionFactory() {
+        try {
+            // JNDI lookup of JMS Connection Factory and JMS Destination
+            Context context = new InitialContext();
+            return (ConnectionFactory) context.lookup(CONNECTION_FACTORY_NAME);
+        } catch (NamingException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -68,7 +85,7 @@ public class SquashJmsLauncher extends JmsPull {
         try (SquashJmsLauncher squash = new SquashJmsLauncher(topic, user, password)) {
             // Initialize publiser and subscriber
             squash.init();
-            
+
             Thread.sleep(120 * 60 * 1000);
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
