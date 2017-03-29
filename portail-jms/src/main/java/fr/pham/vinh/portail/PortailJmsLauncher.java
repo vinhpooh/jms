@@ -3,6 +3,7 @@ package fr.pham.vinh.portail;
 import fr.pham.vinh.portail.jms.PortailJms;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -23,13 +24,11 @@ public class PortailJmsLauncher {
     private static final Logger LOGGER = LoggerFactory.getLogger(PortailJmsLauncher.class);
 
     private final static String[] SCAN_PACKAGES = new String[]{"fr.pham.vinh.portail.resource"};
-    private final static String DEFAULT_CONTEXT_PATH = "/portail-jms/*";
     private static final int DEFAULT_PORT = 8080;
     private static final String DEFAULT_TOPIC = "topic.portail.qi";
     private static final String DEFAULT_USER = "admin";
     private static final String DEFAULT_PASSWORD = "admin123";
 
-    private static String contextPath;
     private static String topic;
     private static String user;
     private static String password;
@@ -38,7 +37,6 @@ public class PortailJmsLauncher {
         Properties properties = new Properties();
         try (InputStream in = PortailJmsLauncher.class.getClassLoader().getResourceAsStream("properties.properties")) {
             properties.load(in);
-            contextPath = properties.getProperty("context.path", DEFAULT_CONTEXT_PATH);
             topic = properties.getProperty("topic", DEFAULT_TOPIC);
             user = properties.getProperty("user", DEFAULT_USER);
             password = properties.getProperty("password", DEFAULT_PASSWORD);
@@ -60,23 +58,32 @@ public class PortailJmsLauncher {
         // The ServletContainer (Jersey) is a Servlet / Filter for deploying root resource classes.
         ServletContainer servletContainer = new ServletContainer(config);
 
-        // ServletHolder (Jetty) is a Servlet instance and context holder.
-        // It holds name, parameters and some states of javax.servlet.Servlet instance.
-        ServletHolder servlet = new ServletHolder(servletContainer);
-
         // Server (Jetty) is the main class for the Jetty HTTP Servlet server. It aggregates connectors and requests.
         // The server itself is a handler and a ThreadPool.
         Server server = new Server(port);
 
-        // ServletContextHandler (Jetty) is a specialization of ContextHandler with support for standard servlets
-        ServletContextHandler context = new ServletContextHandler(server, contextPath);
-        context.addServlet(servlet, "/*");
+        // Setup the basic application "context" for this application at "/"
+        // This is also known as the handler tree (in jetty speak)
+        ServletContextHandler context = new ServletContextHandler(server, "/");
+        context.setResourceBase(PortailJmsLauncher.class.getResource("/webroot").toExternalForm());
+        context.setWelcomeFiles(new String[]{"index.html"});
+
+        // Add Jersey servlet at "/portail-jms/*"
+        ServletHolder portailJmsHolder = new ServletHolder("portail-jms", servletContainer);
+        context.addServlet(portailJmsHolder, "/portail-jms/*");
+
+        // Lastly, the default servlet for root content (always needed, to satisfy servlet spec)
+        // Must be named "default", must be on path mapping "/" and it is important that this is last.
+        ServletHolder holderPwd = new ServletHolder("default", DefaultServlet.class);
+        holderPwd.setInitParameter("dirAllowed", "false");
+        context.addServlet(holderPwd, "/");
 
         try (PortailJms portailJms = new PortailJms(topic, user, password)) {
             // Initialize publiser and subscriber
             portailJms.init();
             // Start things up!
             server.start();
+            LOGGER.info("Jetty server is reachable on port {}", port);
             // By using the server.join() the server thread will join with the current thread.
             server.join();
         } finally {

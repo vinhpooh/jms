@@ -22,7 +22,7 @@ public class PortailJms extends JmsPull {
     /**
      * Default constructor.
      *
-     * @param topic    the topic tu use
+     * @param topic    the topic to use
      * @param user     the user to use
      * @param password the password to use
      */
@@ -61,6 +61,5 @@ public class PortailJms extends JmsPull {
 
         return gson.toJson(portailResponse);
     }
-
 
 }
