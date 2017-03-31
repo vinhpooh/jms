@@ -45,7 +45,7 @@ public class PortailJmsLauncher {
         int port = args.length != 0 && StringUtils.isNotEmpty(args[0]) ? Integer.valueOf(args[0]) : DEFAULT_PORT;
 
         try (PortailJms portailJms = new PortailJms(topic, user, password)) {
-            // Initialize publiser and subscriber
+            // Initialize publisher and subscriber
             portailJms.init();
 
             // Start the embedded server
