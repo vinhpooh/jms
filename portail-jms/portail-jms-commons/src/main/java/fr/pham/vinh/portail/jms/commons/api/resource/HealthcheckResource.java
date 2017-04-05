@@ -1,4 +1,4 @@
-package fr.pham.vinh.portail.jms.commons.resource;
+package fr.pham.vinh.portail.jms.commons.api.resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +12,12 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * HealthCheck resource.
+ * Healthcheck resource.
  */
 @Path("/healthcheck")
-public class HealthCheck {
+public class HealthcheckResource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HealthCheck.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HealthcheckResource.class);
 
     /**
      * Get the application version.
@@ -64,7 +64,7 @@ public class HealthCheck {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
     public Response healthcheck() {
         return Response.ok("Version : " + this.getVersion()).build();
     }

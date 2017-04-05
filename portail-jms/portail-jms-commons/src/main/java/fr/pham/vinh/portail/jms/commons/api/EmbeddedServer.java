@@ -1,4 +1,4 @@
-package fr.pham.vinh.portail.jms.commons.server;
+package fr.pham.vinh.portail.jms.commons.api;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
@@ -19,7 +19,7 @@ public class EmbeddedServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmbeddedServer.class);
 
-    private final static String[] SCAN_PACKAGES = new String[]{"fr.pham.vinh.portail.resource"};
+    private final static String[] SCAN_PACKAGES = new String[]{EmbeddedServer.class.getPackage().getName() + ".resource"};
 
     private Server server;
     private int port;

@@ -1,7 +1,7 @@
 package fr.pham.vinh.portail.jms.openwire;
 
+import fr.pham.vinh.portail.jms.commons.api.EmbeddedServer;
 import fr.pham.vinh.portail.jms.commons.jms.PortailJms;
-import fr.pham.vinh.portail.jms.commons.server.EmbeddedServer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
