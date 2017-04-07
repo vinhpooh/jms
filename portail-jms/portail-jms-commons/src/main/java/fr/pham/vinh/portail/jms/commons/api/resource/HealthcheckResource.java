@@ -57,6 +57,7 @@ public class HealthcheckResource {
 
         if (version == null) {
             // We could not compute the version
+            LOGGER.debug("Unknown version..");
             version = "unknown";
         }
 
